@@ -2,3 +2,4 @@ build/
 .vscode/
 .pytest_cache/
 .benchmarks/
+libreria_ai_per_tutti.egg-info/
