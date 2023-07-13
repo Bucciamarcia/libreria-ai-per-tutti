@@ -5,6 +5,7 @@ setup(
     version='0.1',
     py_modules=['ai_script'],
     install_requires=[
-        "openai"
+        "openai",
+        "weaviate-client"
     ]
 )
