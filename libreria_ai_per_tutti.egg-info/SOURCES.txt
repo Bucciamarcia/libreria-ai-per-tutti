@@ -1,0 +1,7 @@
+ai_script.py
+setup.py
+libreria_ai_per_tutti.egg-info/PKG-INFO
+libreria_ai_per_tutti.egg-info/SOURCES.txt
+libreria_ai_per_tutti.egg-info/dependency_links.txt
+libreria_ai_per_tutti.egg-info/requires.txt
+libreria_ai_per_tutti.egg-info/top_level.txt
