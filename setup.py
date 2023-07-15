@@ -6,6 +6,8 @@ setup(
     py_modules=['ai_script'],
     install_requires=[
         "openai",
-        "weaviate-client"
+        "weaviate-client",
+        "tiktoken",
+        "langchain",
     ]
 )

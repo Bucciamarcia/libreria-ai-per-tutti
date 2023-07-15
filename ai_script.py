@@ -3,27 +3,41 @@ import os
 import weaviate
 import json
 
-def gpt_call(engine:str = "gpt-3.5-turbo", messages:list =[], retries:int = 5, apikey:str = "") -> str:
+def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], temperature:int = 0, retries:int = 5, apikey:str = "", functions:list = [], function_call:str = "auto") -> str:
     """
     Chama GPT con la funzione chat di un motore specificato. Ritorna la risposta di GPT in una stringa.
     Utilizza os.environ.get("OPENAI_API_KEY") per la chiave API di default, ma se ne può specificare una diversa.
     Di default, class_properties si aspetta 3 dati nel json: Title, Content e Tokens.
     import_properties associa a un campo del json, un altro campo nello schema di Weaviate (da lasciare uguali nella maggior parte dei casi).
+    Supporta chiamare funzioni. Se si vuole chiamare una funzione specifica, il nome è da inserire in function_call (verrà sempre chiamata in questo caso).
     """
     openai.api_key = apikey if apikey else os.environ.get("OPENAI_API_KEY", "")
 
     for i in range(retries):
         try:
-            completion = openai.ChatCompletion.create(
-            model=engine,
-            messages=messages
-            )
-            content = completion.choices[0].message.content # type: ignore
-            return str(content)
+            if functions == []:
+                response = openai.ChatCompletion.create(
+                model=engine,
+                messages=messages,
+                temperature=temperature
+                )
+            else:
+                response = openai.ChatCompletion.create(
+                model=engine,
+                messages=messages,
+                functions=functions,
+                function_call=function_call,
+                temperature=temperature
+                )
+            response_message = response["choices"][0]["message"] # type: ignore
+            if response_message.get("function_call"):
+                return str(response_message["function_call"])
+            else:
+                return str(response_message.content)
         except Exception as e:
             print(e)
     # If we get here, we've failed to get a response from GPT: raise an error.
-    raise Exception(f"Failed to get response from GPT after {retries} retries.")
+    raise Exception(f"Failed to get response from GPT.")
 
 def weaviate_import(
     weaviate_url: str, 
