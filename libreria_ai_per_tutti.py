@@ -3,15 +3,22 @@ import os
 import weaviate
 import json
 
-def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], temperature:int = 0, retries:int = 5, apikey:str = "", functions:list = [], function_call:object = {}) -> str:
+def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], temperature:int = 0, retries:int = 5, apikey:str = "", functions:list = [], function_call:str = "auto") -> str:
     """
     Chama GPT con la funzione chat di un motore specificato. Ritorna la risposta di GPT in una stringa.
     Utilizza os.environ.get("OPENAI_API_KEY") per la chiave API di default, ma se ne può specificare una diversa.
     Di default, class_properties si aspetta 3 dati nel json: Title, Content e Tokens.
     import_properties associa a un campo del json, un altro campo nello schema di Weaviate (da lasciare uguali nella maggior parte dei casi).
-    Supporta chiamare funzioni. Se si vuole chiamare una funzione specifica, il nome è da inserire in function_call={"name": "nome_funzione_da_chiamare"}.
+    Supporta chiamare funzioni. Se si vuole chiamare una funzione specifica, il nome è da inserire in function_call.
     """
     openai.api_key = apikey if apikey else os.environ.get("OPENAI_API_KEY", "")
+
+    # If function call is not auto, transform it into an object
+    if function_call != "auto":
+        function_calling = {"name": function_call}
+    else:
+        function_calling = function_call
+        
 
     for i in range(retries):
         try:
@@ -26,7 +33,7 @@ def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], te
                 model=engine,
                 messages=messages,
                 functions=functions,
-                function_call=function_call,
+                function_call=function_calling,
                 temperature=temperature
                 )
             response_message = response["choices"][0]["message"] # type: ignore
