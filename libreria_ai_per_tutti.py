@@ -2,6 +2,7 @@ import openai
 import os
 import weaviate
 import json
+from langchain.text_splitter import TokenTextSplitter
 
 def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], temperature:int = 0, retries:int = 5, apikey:str = "", functions:list = [], function_call:str = "auto") -> str:
     """
@@ -195,3 +196,8 @@ def format_context_token_limit(contexts:list, tokens:int, value_keys:list[str] =
         context += temp_msg
         total_tokens += temp_tokens
     return context.rstrip("\n* ")  # Remove trailing separators
+
+def token_text_splitter(text:str, chunk_size:int = 500, overlap:int = 0, encoding_name:str = "cl100k_base") -> list[str]:
+    """Un semplice wrapper attorno a Tokenizer di langchain. Usa di default cl100k_base."""
+    tokenizer = TokenTextSplitter(chunk_size=chunk_size, overlap=overlap, encoding_name=encoding_name)
+    return tokenizer.split_text(text)
