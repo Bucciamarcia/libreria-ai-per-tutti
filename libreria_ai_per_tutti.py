@@ -8,8 +8,6 @@ def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], te
     """
     Chama GPT con la funzione chat di un motore specificato. Ritorna la risposta di GPT in una stringa.
     Utilizza os.environ.get("OPENAI_API_KEY") per la chiave API di default, ma se ne può specificare una diversa.
-    Di default, class_properties si aspetta 3 dati nel json: Title, Content e Tokens.
-    import_properties associa a un campo del json, un altro campo nello schema di Weaviate (da lasciare uguali nella maggior parte dei casi).
     Supporta chiamare funzioni. Se si vuole chiamare una funzione specifica, il nome è da inserire in function_call.
     """
     openai.api_key = apikey if apikey else os.environ.get("OPENAI_API_KEY", "")
