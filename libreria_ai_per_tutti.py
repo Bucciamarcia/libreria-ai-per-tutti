@@ -197,5 +197,5 @@ def format_context_token_limit(contexts:list, tokens:int, value_keys:list[str] =
 
 def token_text_splitter(text:str, chunk_size:int = 500, overlap:int = 0, encoding_name:str = "cl100k_base") -> list[str]:
     """Un semplice wrapper attorno a Tokenizer di langchain. Usa di default cl100k_base."""
-    tokenizer = TokenTextSplitter(chunk_size=chunk_size, overlap=overlap, encoding_name=encoding_name)
+    tokenizer = TokenTextSplitter(chunk_size=chunk_size, chunk_overlap=overlap, encoding_name=encoding_name)
     return tokenizer.split_text(text)
