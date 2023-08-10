@@ -199,3 +199,37 @@ def token_text_splitter(text:str, chunk_size:int = 500, overlap:int = 0, encodin
     """Un semplice wrapper attorno a Tokenizer di langchain. Usa di default cl100k_base."""
     tokenizer = TokenTextSplitter(chunk_size=chunk_size, chunk_overlap=overlap, encoding_name=encoding_name)
     return tokenizer.split_text(text)
+
+def weaviate_delete_schemas(schemas:list[str], weaviate_url:str|None = None, openai_apikey:str|None = None, weaviate_apikey:str|None = None):
+    "Cancella una classe / schema da Weaviate\n"
+    "Se non viene passato un URL o info di login, vengono prese da variabili d'ambiente\n"
+    "Queste le variabli d'ambiente: WEAVIATE_URL, OPENAI_API_KEY, WEAVIATE_API_KEY"
+    w_url = weaviate_url if weaviate_url else os.environ.get("weaviate_url")
+    length = len(schemas)
+    print(f"Deleting {length} classes")
+    counter = 0
+    w_apikey = weaviate_apikey if weaviate_apikey else os.environ.get("WEAVIATE_API_KEY")
+    client = weaviate.Client(
+        url=w_url,
+        auth_client_secret=weaviate.auth.AuthApiKey(api_key=w_apikey),
+    )
+
+    # delete class
+    for w_schema in schemas:
+        client.schema.delete_class(w_schema)
+        print(f"Deleted class {w_schema}")
+        counter += 1
+    print(f"Deleted {counter} classes")
+
+def weaviate_schemas(weaviate_url:str|None = None, weaviate_apikey:str|None = None) -> list[str]:
+        w_url = weaviate_url if weaviate_url else os.environ.get("weaviate_url")
+        w_apikey = weaviate_apikey if weaviate_apikey else os.environ.get("WEAVIATE_API_KEY")
+
+        client = weaviate.Client(
+            url=w_url,
+            auth_client_secret=weaviate.auth.AuthApiKey(api_key=w_apikey),
+        )
+
+        schema = client.schema.get()
+        schemas = [class_obj["class"] for class_obj in schema["classes"]]
+        return schemas
