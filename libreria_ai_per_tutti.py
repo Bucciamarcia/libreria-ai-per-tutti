@@ -3,6 +3,7 @@ import os
 import weaviate
 import json
 from langchain.text_splitter import TokenTextSplitter
+import tiktoken
 
 def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], temperature:int = 0, retries:int = 5, apikey:str = "", functions:list = [], function_call:str = "auto") -> str:
     """
@@ -167,11 +168,12 @@ def weaviate_call(
 
 def format_context_token_limit(contexts:list, tokens:int, value_keys:list[str] = ["content"], tokens_key:str = "tokens") -> str:
     """
-    Formatta la lista di messaggi in un'unica stringa con elementi separati da nuova linea e asterisco, limitando il numero di token.
-    Messages è una lista di dict con diverse chiavi, almeno una deve essre un contenuto, e una deve essere il numero di token.
-    NOTA: questa funzione non conta i token, devono essere già presenti in un campo del dizionario.
-    In value keys, inserire il nome delle chiavi il cui valore deve essere aggiunto al contesto. Verranno separatii da due trattini.
-    In token key, inserire il nome della chiave che contiene il numero di token.
+    Formatta la lista di messaggi in un'unica stringa con elementi separati da nuova linea e asterisco, limitando il numero di token.\n
+    Messages è una lista di dict con diverse chiavi, almeno una deve essre un contenuto, e una deve essere il numero di token.\n
+    NOTA: questa funzione non conta i token, devono essere già presenti in un campo del dizionario.\n
+    In value keys, inserire il nome delle chiavi il cui valore deve essere aggiunto al contesto. Verranno separatii da due trattini.\n
+    In token key, inserire il nome della chiave che contiene il numero di token.\n
+    Idealmente da usare dopo weaviate_call per formattare i risultati.
     """
     context = "* "
     total_tokens = 0
@@ -233,3 +235,9 @@ def weaviate_schemas(weaviate_url:str|None = None, weaviate_apikey:str|None = No
         schema = client.schema.get()
         schemas = [class_obj["class"] for class_obj in schema["classes"]]
         return schemas
+
+def count_tokens(text: str, encoding_name: str = "cl100k_base") -> int:
+    """Ritorna il numero di token in una stringa di testo."""
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(text))
+    return num_tokens
