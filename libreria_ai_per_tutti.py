@@ -4,8 +4,12 @@ import weaviate
 import json
 from langchain.text_splitter import TokenTextSplitter
 import tiktoken
+import logging
 
-def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], temperature:int = 0, retries:int = 5, apikey:str = "", functions:list = [], function_call:str = "auto") -> str:
+# Set up logging
+logging.basicConfig(level=logging.WARNING)
+
+def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], temperature:int = 0, retries:int = 5, apikey:str = "", functions:list = [], function_call:str = "auto", stream:bool = False) -> str:
     """
     Chama GPT con la funzione chat di un motore specificato. Ritorna la risposta di GPT in una stringa.
     Utilizza os.environ.get("OPENAI_API_KEY") per la chiave API di default, ma se ne può specificare una diversa.
@@ -18,7 +22,10 @@ def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], te
         function_calling = {"name": function_call}
     else:
         function_calling = function_call
-        
+    
+    # If functions exists and stream is True, warn the user
+    if functions != [] and stream:
+        logging.warning("Le funzioni non sono supportate in streaming. Streaming disabilitato.")
 
     for i in range(retries):
         try:
@@ -26,7 +33,8 @@ def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], te
                 response = openai.ChatCompletion.create(
                 model=engine,
                 messages=messages,
-                temperature=temperature
+                temperature=temperature,
+                stream=stream
                 )
             else:
                 response = openai.ChatCompletion.create(
@@ -36,11 +44,20 @@ def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], te
                 function_call=function_calling,
                 temperature=temperature
                 )
-            response_message = response["choices"][0]["message"] # type: ignore
-            if response_message.get("function_call"):
-                return str(response_message["function_call"])
+            if stream and functions == []:
+                complete_response = ""
+                for chunk in response:
+                    if 'choices' in chunk and 'delta' in chunk['choices'][0] and 'content' in chunk['choices'][0]['delta']:
+                        print(chunk["choices"][0]["delta"]["content"], end="", flush=True)
+                        complete_response += chunk["choices"][0]["delta"]["content"]
+                print()
+                return complete_response
             else:
-                return str(response_message.content)
+                response_message = response["choices"][0]["message"]
+                if response_message.get("function_call"):
+                    return str(response_message["function_call"])
+                else:
+                    return str(response_message.content)
         except Exception as e:
             print(e)
     # If we get here, we've failed to get a response from GPT: raise an error.
