@@ -5,17 +5,25 @@ import json
 from langchain.text_splitter import TokenTextSplitter
 import tiktoken
 import logging
+import colorama
 
 # Set up logging
 logging.basicConfig(level=logging.WARNING)
 
-def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], temperature:int = 0, retries:int = 5, apikey:str = "", functions:list = [], function_call:str = "auto", stream:bool = False) -> str:
+def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], temperature:int = 0, retries:int = 5, apikey:str = "", functions:list = [], function_call:str = "auto", stream:bool = False, colorama_color:str|None = None) -> str:
     """
     Chama GPT con la funzione chat di un motore specificato. Ritorna la risposta di GPT in una stringa.
     Utilizza os.environ.get("OPENAI_API_KEY") per la chiave API di default, ma se ne può specificare una diversa.
     Supporta chiamare funzioni. Se si vuole chiamare una funzione specifica, il nome è da inserire in function_call.
+    Supporta lo streaming con stream=True. Questa funzione non ritorna nulla, ma stampa a schermo la risposta di GPT in streaming. Supporta colorama per output colorati.
     """
     openai.api_key = apikey if apikey else os.environ.get("OPENAI_API_KEY", "")
+
+    # Initialize colorama
+    if colorama_color:
+        colorama.init(autoreset=True)
+        colorama_color = colorama_color.upper()
+        color_code = getattr(colorama.Fore, colorama_color, "")
 
     # If function call is not auto, transform it into an object
     if function_call != "auto":
@@ -48,7 +56,10 @@ def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], te
                 complete_response = ""
                 for chunk in response:
                     if 'choices' in chunk and 'delta' in chunk['choices'][0] and 'content' in chunk['choices'][0]['delta']:
-                        print(chunk["choices"][0]["delta"]["content"], end="", flush=True)
+                        if not colorama_color:
+                            print(chunk["choices"][0]["delta"]["content"], end="", flush=True)
+                        elif colorama_color:
+                            print(color_code + chunk["choices"][0]["delta"]["content"], end="", flush=True)
                         complete_response += chunk["choices"][0]["delta"]["content"]
                 print()
                 return complete_response
