@@ -4,11 +4,9 @@ import weaviate
 import json
 from langchain.text_splitter import TokenTextSplitter
 import tiktoken
-import logging
 import colorama
 
 # Set up logging
-logging.basicConfig(level=logging.WARNING)
 
 def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], temperature:int = 0, retries:int = 5, apikey:str = "", functions:list = [], function_call:str = "auto", stream:bool = False, colorama_color:str|None = None) -> str:
     """
@@ -33,7 +31,7 @@ def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], te
     
     # If functions exists and stream is True, warn the user
     if functions != [] and stream:
-        logging.warning("Le funzioni non sono supportate in streaming. Streaming disabilitato.")
+        print("Le funzioni non sono supportate in streaming. Streaming disabilitato.")
 
     for i in range(retries):
         try:
