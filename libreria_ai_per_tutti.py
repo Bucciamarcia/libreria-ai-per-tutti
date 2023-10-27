@@ -248,8 +248,8 @@ def weaviate_delete_schemas(schemas:list[str], weaviate_url:str|None = None, ope
             client.schema.delete_class(w_schema)
             print(f"Deleted class {w_schema}")
             counter += 1
-        except:
-            print(f"Failed to delete class {w_schema}. Continuing...")
+        except Exception as e:
+            print(f"Failed to delete class {w_schema}. Error: {e}")
     print(f"Deleted {counter} classes")
 
 def weaviate_schemas(weaviate_url:str|None = None, weaviate_apikey:str|None = None) -> list[str]:
