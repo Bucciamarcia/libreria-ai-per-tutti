@@ -244,9 +244,12 @@ def weaviate_delete_schemas(schemas:list[str], weaviate_url:str|None = None, ope
 
     # delete class
     for w_schema in schemas:
-        client.schema.delete_class(w_schema)
-        print(f"Deleted class {w_schema}")
-        counter += 1
+        try:
+            client.schema.delete_class(w_schema)
+            print(f"Deleted class {w_schema}")
+            counter += 1
+        except:
+            print(f"Failed to delete class {w_schema}. Continuing...")
     print(f"Deleted {counter} classes")
 
 def weaviate_schemas(weaviate_url:str|None = None, weaviate_apikey:str|None = None) -> list[str]:
