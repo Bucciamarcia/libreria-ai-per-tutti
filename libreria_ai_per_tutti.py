@@ -1,4 +1,6 @@
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=apikey if apikey else os.environ.get("OPENAI_API_KEY", ""))
 import os
 import weaviate
 import json
@@ -15,7 +17,7 @@ def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], te
     Supporta chiamare funzioni. Se si vuole chiamare una funzione specifica, il nome è da inserire in function_call.
     Supporta lo streaming con stream=True. Questa funzione non ritorna nulla, ma stampa a schermo la risposta di GPT in streaming. Supporta colorama per output colorati.
     """
-    openai.api_key = apikey if apikey else os.environ.get("OPENAI_API_KEY", "")
+    
 
     # Initialize colorama
     if colorama_color:
@@ -36,20 +38,16 @@ def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], te
     for i in range(retries):
         try:
             if functions == []:
-                response = openai.ChatCompletion.create(
-                model=engine,
+                response = client.chat.completions.create(model=engine,
                 messages=messages,
                 temperature=temperature,
-                stream=stream
-                )
+                stream=stream)
             else:
-                response = openai.ChatCompletion.create(
-                model=engine,
+                response = client.chat.completions.create(model=engine,
                 messages=messages,
                 functions=functions,
                 function_call=function_calling,
-                temperature=temperature
-                )
+                temperature=temperature)
             if stream and functions == []:
                 complete_response = ""
                 for chunk in response:
