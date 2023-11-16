@@ -45,13 +45,19 @@ def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], te
     if stream and functions == []:
         complete_response = ""
         for chunk in response:
-            print(chunk["choices"][0]["delta"])
+            # Check if the chunk has content and print it
+            if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                if not colorama_color:
+                    print(chunk.choices[0].delta.content, end='', flush=True)
+                elif colorama_color:
+                    print(color_code + chunk.choices[0].delta.content, end='', flush=True)
+                complete_response += chunk.choices[0].delta.content
 
-            """ if not colorama_color:
-                print(chunk["choices"][0]["delta"])
-            elif colorama_color:
-                print(color_code + chunk["choices"][0]["delta"]["content"], end="", flush=True)
-            complete_response += chunk["choices"][0]["delta"]["content"] """
+            # Check if the stream has ended
+            if chunk.choices[0].finish_reason is not None:
+                print()  # Print a newline character after the final content
+                break
+
         print()
         return complete_response
     else:
