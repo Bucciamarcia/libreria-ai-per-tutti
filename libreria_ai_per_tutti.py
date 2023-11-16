@@ -1,6 +1,4 @@
 from openai import OpenAI
-
-client = OpenAI(api_key=apikey if apikey else os.environ.get("OPENAI_API_KEY", ""))
 import os
 import weaviate
 import json
@@ -8,16 +6,14 @@ from langchain.text_splitter import TokenTextSplitter
 import tiktoken
 import colorama
 
-# Set up logging
-
 def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], temperature:int = 0, retries:int = 5, apikey:str = "", functions:list = [], function_call:str = "auto", stream:bool = False, colorama_color:str|None = None) -> str:
     """
-    Chama GPT con la funzione chat di un motore specificato. Ritorna la risposta di GPT in una stringa.
+    Chiama GPT con la funzione chat di un motore specificato. Ritorna la risposta di GPT in una stringa.
     Utilizza os.environ.get("OPENAI_API_KEY") per la chiave API di default, ma se ne può specificare una diversa.
     Supporta chiamare funzioni. Se si vuole chiamare una funzione specifica, il nome è da inserire in function_call.
     Supporta lo streaming con stream=True. Questa funzione non ritorna nulla, ma stampa a schermo la risposta di GPT in streaming. Supporta colorama per output colorati.
     """
-    
+    client = OpenAI(api_key=apikey if apikey else os.environ.get("OPENAI_API_KEY", ""), max_retries=retries)
 
     # Initialize colorama
     if colorama_color:
@@ -35,40 +31,40 @@ def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], te
     if functions != [] and stream:
         print("Le funzioni non sono supportate in streaming. Streaming disabilitato.")
 
-    for i in range(retries):
-        try:
-            if functions == []:
-                response = client.chat.completions.create(model=engine,
-                messages=messages,
-                temperature=temperature,
-                stream=stream)
-            else:
-                response = client.chat.completions.create(model=engine,
-                messages=messages,
-                functions=functions,
-                function_call=function_calling,
-                temperature=temperature)
-            if stream and functions == []:
-                complete_response = ""
-                for chunk in response:
-                    if 'choices' in chunk and 'delta' in chunk['choices'][0] and 'content' in chunk['choices'][0]['delta']:
-                        if not colorama_color:
-                            print(chunk["choices"][0]["delta"]["content"], end="", flush=True)
-                        elif colorama_color:
-                            print(color_code + chunk["choices"][0]["delta"]["content"], end="", flush=True)
-                        complete_response += chunk["choices"][0]["delta"]["content"]
-                print()
-                return complete_response
-            else:
-                response_message = response["choices"][0]["message"]
-                if response_message.get("function_call"):
-                    return str(response_message["function_call"])
-                else:
-                    return str(response_message.content)
-        except Exception as e:
-            print(e)
-    # If we get here, we've failed to get a response from GPT: raise an error.
-    raise Exception(f"Failed to get response from GPT.")
+    if functions == []:
+        response = client.chat.completions.create(model=engine,
+        messages=messages,
+        temperature=temperature,
+        stream=stream)
+    else:
+        response = client.chat.completions.create(model=engine,
+        messages=messages,
+        tools=functions,
+        tool_choice=function_calling,
+        temperature=temperature)
+    if stream and functions == []:
+        complete_response = ""
+        for chunk in response:
+            print(chunk["choices"][0]["delta"])
+
+            """ if not colorama_color:
+                print(chunk["choices"][0]["delta"])
+            elif colorama_color:
+                print(color_code + chunk["choices"][0]["delta"]["content"], end="", flush=True)
+            complete_response += chunk["choices"][0]["delta"]["content"] """
+        print()
+        return complete_response
+    else:
+        if response.choices[0].message.tool_calls:
+            name = response.choices[0].message.tool_calls[0].function.name
+            function_response = response.choices[0].message.tool_calls[0].function.arguments
+            object = {
+                "name": name,
+                "arguments": function_response
+            }
+            return json.dumps(object)
+        else:
+            return str(response.choices[0].message.content)
 
 def weaviate_import(
     weaviate_url: str, 
