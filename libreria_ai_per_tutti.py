@@ -23,7 +23,7 @@ def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], te
 
     # If function call is not auto, transform it into an object
     if function_call != "auto":
-        function_calling = {"name": function_call}
+        function_calling = {"type": "function", "function": {"name": function_call}}
     else:
         function_calling = function_call
     
