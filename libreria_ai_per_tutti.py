@@ -6,12 +6,24 @@ from langchain.text_splitter import TokenTextSplitter
 import tiktoken
 import colorama
 
-def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], temperature:int = 0, retries:int = 5, apikey:str = "", functions:list = [], function_call:str = "auto", stream:bool = False, colorama_color:str|None = None) -> str:
+def gpt_call(
+        engine:str = "gpt-3.5-turbo",
+        messages:list[dict[str,str]] = [],
+        temperature:int = 0,
+        retries:int = 5,
+        apikey:str = "",
+        functions:list = [],
+        function_call:str = "auto",
+        stream:bool = False,
+        colorama_color:str|None = None,
+        display_usage:bool = False
+        ) -> str|tuple[str, dict[str, int]]:
     """
     Chiama GPT con la funzione chat di un motore specificato. Ritorna la risposta di GPT in una stringa.
     Utilizza os.environ.get("OPENAI_API_KEY") per la chiave API di default, ma se ne può specificare una diversa.
     Supporta chiamare funzioni. Se si vuole chiamare una funzione specifica, il nome è da inserire in function_call.
     Supporta lo streaming con stream=True. Questa funzione non ritorna nulla, ma stampa a schermo la risposta di GPT in streaming. Supporta colorama per output colorati.
+    display_usage è disponibile solo se NON si usa lo streaming.
     """
     client = OpenAI(api_key=apikey if apikey else os.environ.get("OPENAI_API_KEY", ""), max_retries=retries)
 
@@ -68,9 +80,19 @@ def gpt_call(engine:str = "gpt-3.5-turbo", messages:list[dict[str,str]] = [], te
                 "name": name,
                 "arguments": function_response
             }
-            return json.dumps(object)
+            if not display_usage:
+                return json.dumps(object)
+            else:
+                usage = response.usage
+                return (json.dumps(object), usage)
         else:
-            return str(response.choices[0].message.content)
+            if not display_usage:
+                return str(response.choices[0].message.content)
+            else:
+                usage = response.usage
+                usage_completion_tokens = usage.completion_tokens
+                usage_prompt_tokens = usage.prompt_tokens
+                return (str(response.choices[0].message.content), {"completion_tokens": usage_completion_tokens, "prompt_tokens": usage_prompt_tokens})
 
 def weaviate_import(
     weaviate_url: str, 

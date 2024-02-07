@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='libreria_ai_per_tutti',
-    version='0.1.7',
+    version='0.1.8',
     py_modules=['libreria_ai_per_tutti'],
     install_requires=[
         "openai>=1.2.0",
