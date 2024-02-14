@@ -89,10 +89,7 @@ def gpt_call(
             if not display_usage:
                 return str(response.choices[0].message.content)
             else:
-                usage = response.usage
-                usage_completion_tokens = usage.completion_tokens
-                usage_prompt_tokens = usage.prompt_tokens
-                return (str(response.choices[0].message.content), {"completion_tokens": usage_completion_tokens, "prompt_tokens": usage_prompt_tokens})
+                return (str(response.choices[0].message.content), response.usage)
 
 def weaviate_import(
     weaviate_url: str, 
